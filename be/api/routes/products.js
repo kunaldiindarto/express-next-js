@@ -28,8 +28,12 @@ router.post("/", async (req, res, next) => {
     const saveProduct = await product.save();
 
     res.status(201).json({
-      message: "post /product Menambahkan product",
-      createdProduct: product,
+      message: "Created New Product Success",
+      createdProduct: {
+        _id: saveProduct._id,
+        name: saveProduct.name,
+        price: saveProduct.price,
+      },
     });
   } catch (error) {
     return next(error);
@@ -41,10 +45,23 @@ router.get("/:productId", async (req, res, next) => {
     const id = req.params.productId;
     const result = await Product.findById(id).exec();
 
-    res.status(200).json({
-      message: "get /product ambil satu data berdasarkan Id",
-      result,
-    });
+    if (result) {
+      res.status(200).json({
+        product: {
+          _id: result._id,
+          name: result.name,
+          price: result.price,
+        },
+        request: {
+          type: "GET",
+          url: "http://localhost:3000/products",
+        },
+      });
+    } else {
+      res.status(404).json({
+        message: "Input Product ID is not valid, please check your input ID",
+      });
+    }
   } catch (error) {
     return next(error);
   }
@@ -58,8 +75,11 @@ router.patch("/:productId", async (req, res, next) => {
       { $set: req.body }
     ).exec();
     res.status(200).json({
-      message: "patch /product update data berdasarkan Id",
-      result,
+      message: "Product Updated",
+      request: {
+        type: "GET",
+        url: `http://localhost:3000/products/${id}`,
+      },
     });
   } catch (error) {
     return next(error);
@@ -72,8 +92,15 @@ router.delete("/:productId", async (req, res, next) => {
     const result = await Product.deleteOne({ _id: id }).exec();
 
     res.status(200).json({
-      message: "delete /product berdasarkan Id",
-      result,
+      message: "Product Deleted",
+      request: {
+        type: "POST",
+        url: `http://localhost:3000/products`,
+        body: {
+          name: "String",
+          price: "Number",
+        },
+      },
     });
   } catch (error) {
     return next(error);
