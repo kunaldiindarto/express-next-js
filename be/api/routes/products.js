@@ -1,13 +1,42 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
+const multer = require("multer");
+const fs = require("fs");
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + file.originalname);
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 1024 * 1024 * 5,
+  },
+  fileFilter,
+});
 
 const Product = require("../models/productModel");
 
-// define the home page route
+// define the home page route /product
 router.get("/", async (req, res, next) => {
   try {
-    const result = await Product.find().exec();
+    const result = await Product.find()
+      .select("name price _id productImage")
+      .exec();
     res.status(200).json({
       message: "get /product dan ambil semua data",
       result,
@@ -17,12 +46,14 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", upload.single("productImage"), async (req, res, next) => {
   try {
+    console.log(req.file);
     const product = new Product({
       _id: new mongoose.Types.ObjectId(),
       name: req.body.name,
       price: req.body.price,
+      productImage: req.file.path,
     });
 
     const saveProduct = await product.save();
@@ -33,6 +64,10 @@ router.post("/", async (req, res, next) => {
         _id: saveProduct._id,
         name: saveProduct.name,
         price: saveProduct.price,
+        request: {
+          type: "GET",
+          url: `http://localhost:3000/products/${saveProduct._id}`,
+        },
       },
     });
   } catch (error) {
@@ -89,6 +124,15 @@ router.patch("/:productId", async (req, res, next) => {
 router.delete("/:productId", async (req, res, next) => {
   try {
     const id = req.params.productId;
+    // delete photo
+    const findData = await Product.findById(id).exec();
+
+    const pathPhoto = findData.productImage.split("\\");
+    const resultSplit = `./${pathPhoto[0]}/${pathPhoto[pathPhoto.length - 1]}`;
+    console.log(resultSplit);
+    const deletePhoto = await fs.unlinkSync(resultSplit);
+    if (deletePhoto === undefined) console.log("berhasil hapus file foto file");
+
     const result = await Product.deleteOne({ _id: id }).exec();
 
     res.status(200).json({

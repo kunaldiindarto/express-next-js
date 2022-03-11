@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const port = 3000;
 const productRoutes = require("./api/routes/products.js");
 const orderRoutes = require("./api/routes/orders");
+const userRoutes = require("./api/routes/user");
 
 mongoose.connect("mongodb://127.0.0.1:27017/project-2-shop");
 
@@ -38,6 +39,7 @@ app.get("/", (req, res, next) => {
 
 app.use("/products", productRoutes);
 app.use("/order", orderRoutes);
+app.use("/user", userRoutes);
 
 app.use((req, res, next) => {
   const error = new Error("Not found");
