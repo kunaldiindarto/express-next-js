@@ -3,28 +3,20 @@ const mongoose = require("mongoose");
 const orderSchema = mongoose.Schema(
   {
     _id: mongoose.Schema.Types.ObjectId,
-    product: {
+    cart: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
-      required: true,
+      ref: "Cart",
     },
-    quantity: {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    totalPrice: {
       type: Number,
-      default: 1,
-    },
-    createdAt: {
-      type: Date,
-      immutable: true, //penting biar gabisa dirubah rubah
-      // default: new Date(),
-      default: () => Date.now(),
-    },
-    updatedAt: {
-      type: Date,
-      // default: new Date(),
-      default: () => Date.now(),
+      default: 0,
     },
   },
-  { versionKey: false }
+  { timestamps: true, versionKey: false }
 );
 
 module.exports = mongoose.model("Order", orderSchema);
